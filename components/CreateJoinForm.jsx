@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CreateJoinForm({ currentPlayer, setCurrentPlayer }) {
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [gameId, setGameId] = useState('');
+  const [joinPassword, setJoinPassword] = useState('');
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState('');
+
+
 
   const createPlayer = async (e) => {
     e.preventDefault();
@@ -48,7 +52,8 @@ export default function CreateJoinForm({ currentPlayer, setCurrentPlayer }) {
       });
       if (res.ok) {
         const game = await res.json();
-        window.location.href = `/game/${game._id}`;
+        setPassword(game.password);
+        setGameId(game._id);
       } else {
         setError('Failed to create game');
       }
@@ -58,28 +63,7 @@ export default function CreateJoinForm({ currentPlayer, setCurrentPlayer }) {
     setCreating(false);
   };
 
-  const joinGame = async (e) => {
-    e.preventDefault();
-    if (!currentPlayer || !gameId.trim()) return;
-    setJoining(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/games/${gameId.trim()}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId: currentPlayer._id }),
-      });
-      if (res.ok) {
-        window.location.href = `/game/${gameId.trim()}`;
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to join game');
-      }
-    } catch (err) {
-      setError('Network error');
-    }
-    setJoining(false);
-  };
+
 
   if (!currentPlayer) {
     return (
@@ -110,15 +94,46 @@ export default function CreateJoinForm({ currentPlayer, setCurrentPlayer }) {
             {creating ? 'Creating Game...' : 'Create Game'}
           </button>
         </form>
+        {password && (
+          <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-md">
+            <p className="text-green-800 font-semibold">Game created successfully!</p>
+            <p className="text-green-700">Password: <span className="font-mono">{password}</span></p>
+            <button onClick={() => window.location.href = `/game/${gameId}`} className="mt-2 primary-button">
+              Go to Game
+            </button>
+          </div>
+        )}
       </div>
       <div>
         <h2 className="text-xl red-text mb-4">Join Existing Game</h2>
-        <form onSubmit={joinGame} className="space-y-2">
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          if (!joinPassword.trim()) return;
+          setJoining(true);
+          setError('');
+          try {
+            const res = await fetch('/api/games/join', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: joinPassword.trim(), playerId: currentPlayer._id }),
+            });
+            if (res.ok) {
+              const game = await res.json();
+              window.location.href = `/game/${game._id}`;
+            } else {
+              const data = await res.json();
+              setError(data.error || 'Failed to join game');
+            }
+          } catch (err) {
+            setError('Network error');
+          }
+          setJoining(false);
+        }} className="space-y-2">
           <input
             type="text"
-            placeholder="Enter game ID"
-            value={gameId}
-            onChange={(e) => setGameId(e.target.value)}
+            placeholder="Enter game password"
+            value={joinPassword}
+            onChange={(e) => setJoinPassword(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-primary-red"
             required
           />

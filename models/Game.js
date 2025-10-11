@@ -7,6 +7,7 @@ const GameSchema = new mongoose.Schema({
   winner: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
   board: { type: [String], default: Array(9).fill(null) }, // "X", "O", or null
   turn: { type: String, enum: ['X','O'], default: 'X' },
+  password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   endedAt: { type: Date, default: null }
 });

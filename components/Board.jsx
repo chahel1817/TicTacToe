@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 
 export default function Board({ game, playerId, onGameUpdate }) {
   const [board, setBoard] = useState(game.board);
-  const [currentTurn, setCurrentTurn] = useState(game.currentTurn);
+  const [currentTurn, setCurrentTurn] = useState(game.turn);
   const [status, setStatus] = useState(game.status);
   const [winner, setWinner] = useState(game.winner);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setBoard(game.board);
-    setCurrentTurn(game.currentTurn);
+    setCurrentTurn(game.turn);
     setStatus(game.status);
     setWinner(game.winner);
   }, [game]);
@@ -42,7 +42,9 @@ export default function Board({ game, playerId, onGameUpdate }) {
   const renderCell = (position) => (
     <div
       key={position}
-      className="board-cell"
+      className={`w-full h-24 border-2 border-gray-400 flex items-center justify-center text-4xl font-bold cursor-pointer hover:bg-blue-100 transition-colors ${
+        board[position] === 'X' ? 'text-red-500' : board[position] === 'O' ? 'text-blue-500' : ''
+      }`}
       onClick={() => handleClick(position)}
     >
       {board[position]}
@@ -53,7 +55,7 @@ export default function Board({ game, playerId, onGameUpdate }) {
     if (status === 'open') return 'Waiting for another player...';
     if (status === 'finished') {
       if (winner) {
-        return winner.toString() === playerId ? 'You won!' : 'You lost!';
+        return winner._id.toString() === playerId ? 'You won!' : 'You lost!';
       }
       return 'It\'s a draw!';
     }
@@ -63,7 +65,7 @@ export default function Board({ game, playerId, onGameUpdate }) {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <div className="game-board">
+      <div className="grid grid-cols-3 gap-0 w-72 h-72 mx-auto bg-white shadow-lg rounded-lg p-2">
         {board.map((_, index) => renderCell(index))}
       </div>
       <div className="text-center">

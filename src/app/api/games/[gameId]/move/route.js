@@ -1,37 +1,39 @@
-import connect from '../../../../lib/mongodb';
-import Game from '../../../../models/Game';
-import Move from '../../../../models/Move';
-import Player from '../../../../models/Player';
-import { checkWinner } from '../../../../lib/utils';
+import connect from '@lib/mongodb';
+import Game from '@models/Game';
+import Move from '@models/Move';
+import Player from '@models/Player';
+import { checkWinner } from '@lib/utils';
+import { NextResponse } from 'next/server';
 
 export async function POST(request, { params }) {
   try {
     await connect();
+    const { gameId } = await params;
     const { playerId, position } = await request.json();
     if (playerId == null || position == null) {
-      return Response.json({ error: 'Player ID and position required' }, { status: 400 });
+      return NextResponse.json({ error: 'Player ID and position required' }, { status: 400 });
     }
-    const game = await Game.findById(params.gameId).populate('player1 player2');
+    const game = await Game.findById(gameId).populate('player1 player2');
     if (!game) {
-      return Response.json({ error: 'Game not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
     if (game.status !== 'active') {
-      return Response.json({ error: 'Game is not active' }, { status: 400 });
+      return NextResponse.json({ error: 'Game is not active' }, { status: 400 });
     }
     const isPlayer1 = game.player1._id.toString() === playerId;
     const isPlayer2 = game.player2 && game.player2._id.toString() === playerId;
     if (!isPlayer1 && !isPlayer2) {
-      return Response.json({ error: 'Player not in game' }, { status: 400 });
+      return NextResponse.json({ error: 'Player not in game' }, { status: 400 });
     }
     const symbol = isPlayer1 ? 'X' : 'O';
     if (symbol !== game.turn) {
-      return Response.json({ error: 'Not your turn' }, { status: 400 });
+      return NextResponse.json({ error: 'Not your turn' }, { status: 400 });
     }
     if (position < 0 || position > 8 || game.board[position] !== null) {
-      return Response.json({ error: 'Invalid move' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid move' }, { status: 400 });
     }
     game.board[position] = symbol;
-    const move = new Move({ gameId: params.gameId, playerId, position, mark: symbol });
+    const move = new Move({ gameId, playerId, position, mark: symbol });
     await move.save();
     const result = checkWinner(game.board);
     if (result.winnerMark) {
@@ -57,12 +59,12 @@ export async function POST(request, { params }) {
       game.turn = game.turn === 'X' ? 'O' : 'X';
     }
     await game.save();
-    const updatedGame = await Game.findById(params.gameId)
-      .populate('player1', 'username')
-      .populate('player2', 'username')
+    const updatedGame = await Game.findById(gameId)
+      .populate('player1', 'username wins losses draws')
+      .populate('player2', 'username wins losses draws')
       .populate('winner', 'username');
-    return Response.json(updatedGame);
+    return NextResponse.json(updatedGame);
   } catch (error) {
-    return Response.json({ error: 'Failed to make move' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to make move' }, { status: 500 });
   }
 }

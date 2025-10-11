@@ -1,12 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import CreateJoinForm from '../components/CreateJoinForm';
-
-export const metadata = {
-  title: 'Tic Tac Toe Multiplayer | Home',
-  description: 'Create or join a Tic Tac Toe game with friends. Play online with real-time updates.',
-};
+import CreateJoinForm from '../../components/CreateJoinForm';
 
 export default function Home() {
   const [currentPlayer, setCurrentPlayer] = useState(null);
