@@ -44,7 +44,6 @@ export async function POST(request, { params }) {
     }
     game.player2 = playerId;
     game.status = 'active';
-    game.turn = 'O'; // Player1 X, Player2 O
     await game.save();
     const populatedGame = await Game.findById(gameId)
       .populate('player1', 'username')

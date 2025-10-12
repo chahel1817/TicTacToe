@@ -31,7 +31,8 @@ export default function Board({ game, playerId, onGameUpdate }) {
         const updatedGame = await res.json();
         onGameUpdate(updatedGame);
       } else {
-        alert('Move failed');
+        const errorData = await res.json();
+        alert(`Move failed: ${errorData.error}`);
       }
     } catch (err) {
       alert('Network error');
