@@ -9,8 +9,8 @@ export async function POST(request, { params }) {
   try {
     await connect();
 
-    // ✅ Don't await params
-    const { gameId } = params;
+    // ✅ Await params
+    const { gameId } = await params;
     const { playerId, position } = await request.json();
 
     console.log('➡️ Move request:', { gameId, playerId, position });

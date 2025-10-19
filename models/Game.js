@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+  import mongoose from 'mongoose';
 
 const GameSchema = new mongoose.Schema({
   player1: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },

@@ -4,7 +4,9 @@
   "dependencies": {
     "@mui/material": "^5.0.0",
     "ci-info": "^4.3.1",
+    "framer-motion": "^12.23.24",
     "mongoose": "^7.0.0",
+    "motion": "^12.23.24",
     "next": "^15.5.4",
     "react": "18.x",
     "react-dom": "18.x",

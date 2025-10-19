@@ -16,6 +16,12 @@
   --gray-800: #1f2937;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+/* globals.css */
+.shadow-3d {
+  box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.4),
+              -4px -4px 12px rgba(255, 255, 255, 0.1);
+}
+
 
 * {
   box-sizing: border-box;

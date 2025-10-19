@@ -1,77 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Board({ game, playerId, onGameUpdate }) {
-  const [board, setBoard] = useState(game.board);
-  const [currentTurn, setCurrentTurn] = useState(game.turn);
-  const [status, setStatus] = useState(game.status);
-  const [winner, setWinner] = useState(game.winner);
-  const [loading, setLoading] = useState(false);
+  const board = game?.board || [];
+  // Determine if it's the player's turn
+  const player1Id = game?.player1?._id?.toString() || game?.player1;
+  const player2Id = game?.player2?._id?.toString() || game?.player2;
+  const isPlayer1 = player1Id === playerId;
+  const isPlayer2 = player2Id === playerId;
+  const playerSymbol = isPlayer1 ? 'X' : isPlayer2 ? 'O' : null;
+  const isPlayerTurn = game?.status === 'active' && game?.turn === playerSymbol;
 
-  useEffect(() => {
-    setBoard(game.board);
-    setCurrentTurn(game.turn);
-    setStatus(game.status);
-    setWinner(game.winner);
-  }, [game]);
+  const handleMove = async (index) => {
+    if (!isPlayerTurn || board[index]) return;
 
-  const handleClick = async (position) => {
-    if (status !== 'active' || loading || board[position] !== null) return;
-    const symbol = game.player1._id.toString() === playerId ? 'X' : 'O';
-    if (symbol !== currentTurn) return;
-    setLoading(true);
     try {
       const res = await fetch(`/api/games/${game._id}/move`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId, position }),
+        body: JSON.stringify({ playerId, position: index }),
       });
+
       if (res.ok) {
         const updatedGame = await res.json();
         onGameUpdate(updatedGame);
       } else {
-        const errorData = await res.json();
-        alert(`Move failed: ${errorData.error}`);
+        console.error('Move failed');
       }
-    } catch (err) {
-      alert('Network error');
+    } catch (error) {
+      console.error('Error making move:', error);
     }
-    setLoading(false);
   };
 
-  const renderCell = (position) => (
-    <div
-      key={position}
-      className={`w-full h-24 border-2 border-gray-400 flex items-center justify-center text-4xl font-bold cursor-pointer hover:bg-blue-100 transition-colors ${
-        board[position] === 'X' ? 'text-red-500' : board[position] === 'O' ? 'text-blue-500' : ''
-      }`}
-      onClick={() => handleClick(position)}
-    >
-      {board[position]}
-    </div>
-  );
-
-  const getStatusMessage = () => {
-    if (status === 'open') return 'Waiting for another player...';
-    if (status === 'finished') {
-      if (winner) {
-        return winner._id.toString() === playerId ? 'You won!' : 'You lost!';
-      }
-      return 'It\'s a draw!';
-    }
-    const isMyTurn = (game.player1._id.toString() === playerId ? 'X' : 'O') === currentTurn;
-    return isMyTurn ? 'Your turn' : 'Opponent\'s turn';
-  };
+  if (!board || !Array.isArray(board)) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <p className="text-white text-xl">Loading board...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="grid grid-cols-3 gap-0 w-72 h-72 mx-auto bg-white shadow-lg rounded-lg p-2">
-        {board.map((_, index) => renderCell(index))}
-      </div>
-      <div className="text-center">
-        <p className="red-text font-semibold">{getStatusMessage()}</p>
-        {loading && <p className="text-gray-600">Making move...</p>}
+    <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-white/10">
+        {board.map((cell, index) => (
+          <motion.div
+            key={index}
+            whileHover={{
+              scale: isPlayerTurn && !cell ? 1.08 : 1,
+              boxShadow: isPlayerTurn && !cell
+                ? '0px 0px 18px rgba(239, 68, 68, 0.6)'
+                : '0px 0px 6px rgba(0,0,0,0.2)',
+            }}
+            whileTap={{ scale: 0.93 }}
+            onClick={() => handleMove(index)}
+            className={`w-20 h-20 md:w-24 md:h-24 rounded-xl flex justify-center items-center text-3xl md:text-4xl font-bold cursor-pointer transition-all duration-200 ${
+              cell
+                ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white shadow-inner'
+                : 'bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700 shadow-lg hover:shadow-xl'
+            } ${isPlayerTurn && !cell ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+          >
+            <AnimatePresence>
+              {cell && (
+                <motion.span
+                  key={cell + index}
+                  initial={{ scale: 0, rotate: 90, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  exit={{ scale: 0, rotate: -90, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 250, damping: 15 }}
+                  className={cell === 'X' ? 'text-red-400 drop-shadow-lg' : 'text-blue-400 drop-shadow-lg'}
+                >
+                  {cell}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
       </div>
     </div>
   );
